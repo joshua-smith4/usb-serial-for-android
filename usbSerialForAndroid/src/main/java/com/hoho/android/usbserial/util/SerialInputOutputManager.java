@@ -206,6 +206,7 @@ public class SerialInputOutputManager implements Runnable {
             Log.w(TAG, "Run ending due to exception: " + e.getMessage(), e);
             final Listener listener = getListener();
             if (listener != null) {
+              Log.d(TAG, "Calling onRunError");
               listener.onRunError(e);
             }
         } finally {
@@ -222,13 +223,20 @@ public class SerialInputOutputManager implements Runnable {
         synchronized (mReadBufferLock) {
             buffer = mReadBuffer.array();
         }
+        Log.d(TAG, "Starting read on serial port in step");
         int len = mSerialPort.read(buffer, mReadTimeout);
+        Log.d(TAG, "Read data len=" + len);
         if (len > 0) {
             if (DEBUG) {
                 Log.d(TAG, "Read data len=" + len);
             }
             final Listener listener = getListener();
+            if (listener == null) {
+                Log.d(TAG, "No listener");
+                return;
+            }
             if (listener != null) {
+                Log.d(TAG, "Calling onNewData");
                 final byte[] data = new byte[len];
                 System.arraycopy(buffer, 0, data, 0, len);
                 listener.onNewData(data);
@@ -250,7 +258,9 @@ public class SerialInputOutputManager implements Runnable {
             if (DEBUG) {
                 Log.d(TAG, "Writing data len=" + len);
             }
+            Log.d(TAG, "Starting write on serial port in step");
             mSerialPort.write(buffer, mWriteTimeout);
+            Log.d(TAG, "Write completed");
         }
     }
 

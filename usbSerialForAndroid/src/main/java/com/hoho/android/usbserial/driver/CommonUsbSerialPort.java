@@ -179,10 +179,13 @@ public abstract class CommonUsbSerialPort implements UsbSerialPort {
     public int read(final byte[] dest, final int length, final int timeout) throws IOException {return read(dest, length, timeout, true);}
 
     protected int read(final byte[] dest, int length, final int timeout, boolean testConnection) throws IOException {
+        Log.d(TAG, "read " + length + " bytes - timeout: " + timeout + " ms - testConnection: " + testConnection);
         if(mConnection == null || mUsbRequest == null) {
+            Log.e(TAG, "connection closed");
             throw new IOException("Connection closed");
         }
         if(length <= 0) {
+            Log.e(TAG, "read length invalid: " + length);
             throw new IllegalArgumentException("Read length too small");
         }
         length = Math.min(length, dest.length);
@@ -209,7 +212,9 @@ public abstract class CommonUsbSerialPort implements UsbSerialPort {
             if (!mUsbRequest.queue(buf)) {
                 throw new IOException("Queueing USB request failed");
             }
+            Log.d(TAG, "read is queued, waiting for data");
             final UsbRequest response = mConnection.requestWait();
+            Log.d(TAG, "read is done, data is available");
             if (response == null) {
                 throw new IOException("Waiting for USB request failed");
             }
@@ -217,6 +222,7 @@ public abstract class CommonUsbSerialPort implements UsbSerialPort {
             // Android error propagation is improvable:
             //   response != null & nread == 0 can be: connection lost, buffer to small, ???
             if(nread == 0) {
+                Log.d(TAG, "error in read: nread == 0, testing connection");
                 testConnection();
             }
         }
